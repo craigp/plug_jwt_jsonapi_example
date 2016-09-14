@@ -1,0 +1,13 @@
+/_build
+/cover
+/deps
+/doc
+erl_crash.dump
+*.ez
+*.beam
+dev.exs
+config/dev.exs
+.envrc
+doc
+tags
+docs
