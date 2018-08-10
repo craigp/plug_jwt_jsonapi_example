@@ -1,29 +1,33 @@
 defmodule PlugJwtJsonapiExample.Auth do
+
+  alias PlugJwtJsonapiExample.Guardian
+
   use Plug.Builder
 
   plug :validate_token
 
-  def validate_token(%Plug.Conn{} = conn, _opts) do
-    case conn.request_path do
-      "/login" ->
+  def validate_token(%Plug.Conn{
+    request_path: "/login"
+  } = conn, _opts), do: conn
+
+  def validate_token(conn, _opts) do
+    conn
+    |> get_req_header("authorization")
+    |> do_validate_token(conn)
+  end
+
+  defp do_validate_token([], conn) do
+    conn
+    |> send_resp(401, "")
+    |> halt
+  end
+
+  defp do_validate_token(["Bearer " <> token|t], conn) do
+    case Guardian.decode_and_verify(token) do
+      {:error, _} ->
+        do_validate_token(t, conn)
+      {:ok, %{"exp" => _exp}} ->
         conn
-      _ ->
-        case Plug.Conn.get_req_header(conn, "authorization") do
-          ["Bearer " <> token] ->
-            Guardian.decode_and_verify(token, %{})
-            |> case do
-              {:error, _} ->
-                conn
-                |> send_resp(401, "")
-                |> halt
-              {:ok, %{"exp" => _exp}} ->
-                conn
-            end
-          _ ->
-            conn
-            |> send_resp(401, "")
-            |> halt
-        end
     end
   end
 

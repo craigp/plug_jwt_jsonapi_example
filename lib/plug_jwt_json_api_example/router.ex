@@ -1,4 +1,5 @@
 defmodule PlugJwtJsonapiExample.Router do
+
   use Plug.Router
 
   if Mix.env == :dev do
@@ -21,7 +22,7 @@ defmodule PlugJwtJsonapiExample.Router do
     {:ok, response} =
       PlugJwtJsonapiExample.InfoSerializer
       |> JaSerializer.format(data, conn)
-      |> Poison.encode
+      |> Jason.encode
     conn |> send_resp(200, response)
   end
 
@@ -29,7 +30,9 @@ defmodule PlugJwtJsonapiExample.Router do
     {:ok, %{user_name: "craigp"}} # TODO fetch and auth the user from somewhere useful
     |> case do
       {:ok, user} ->
-        {:ok, jwt, %{"exp" => exp} = claims} = Guardian.encode_and_sign(user)
+        {:ok, jwt, %{
+          "exp" => exp
+        } = _claims} = PlugJwtJsonapiExample.Guardian.encode_and_sign(user)
         conn
         |> put_resp_header("authorization", "Bearer #{jwt}")
         |> put_resp_header("x-expires", to_string(exp))
@@ -41,8 +44,8 @@ defmodule PlugJwtJsonapiExample.Router do
   end
 
   get "/test" do
-    conn
-    |> send_resp(200, "OK")
+    send_resp(conn, 200, "OK")
   end
 
 end
+
